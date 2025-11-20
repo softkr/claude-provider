@@ -1,0 +1,187 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  GO_VERSION: '1.21'
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: make test
+
+      - name: Run linter
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+
+  build:
+    name: Build
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            suffix: linux-amd64
+          - goos: linux
+            goarch: arm64
+            suffix: linux-arm64
+          - goos: darwin
+            goarch: amd64
+            suffix: darwin-amd64
+          - goos: darwin
+            goarch: arm64
+            suffix: darwin-arm64
+          - goos: windows
+            goarch: amd64
+            suffix: windows-amd64.exe
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          mkdir -p build
+          go build -ldflags "-s -w -X main.version=${{ github.ref_name }}" -o build/claude-switch-${{ matrix.suffix }} .
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: claude-switch-${{ matrix.suffix }}
+          path: build/claude-switch-${{ matrix.suffix }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Create release directory
+        run: |
+          mkdir -p release
+          cp README.md LICENSE release/
+          cd artifacts
+          for dir in */; do
+            cd "$dir"
+            if [[ $dir == *"windows"* ]]; then
+              zip -q "../../release/claude-switch-${{ github.ref_name }}-${dir%/}.zip" *
+            else
+              tar -czf "../../release/claude-switch-${{ github.ref_name }}-${dir%/}.tar.gz" *
+            fi
+            cd ..
+          done
+
+      - name: Generate checksums
+        run: |
+          cd release
+          sha256sum * > checksums.txt
+          cat checksums.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## 🎉 Release ${{ github.ref_name }}
+
+            ### 📦 Downloads
+
+            Choose the appropriate binary for your platform:
+
+            - **Linux AMD64**: `claude-switch-${{ github.ref_name }}-linux-amd64.tar.gz`
+            - **Linux ARM64**: `claude-switch-${{ github.ref_name }}-linux-arm64.tar.gz`
+            - **macOS AMD64**: `claude-switch-${{ github.ref_name }}-darwin-amd64.tar.gz`
+            - **macOS ARM64**: `claude-switch-${{ github.ref_name }}-darwin-arm64.tar.gz`
+            - **Windows AMD64**: `claude-switch-${{ github.ref_name }}-windows-amd64.zip`
+
+            ### 🔐 Verification
+
+            Verify the integrity of your download using the provided checksums:
+            ```bash
+            sha256sum -c checksums.txt
+            ```
+
+            ### 🚀 Quick Start
+
+            ```bash
+            # Download and extract
+            curl -L https://github.com/claude-provider/switch/releases/latest/download/claude-switch-${{ github.ref_name }}-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m).tar.gz | tar -xz
+            sudo mv claude-switch-* /usr/local/bin/claude-switch
+            sudo chmod +x /usr/local/bin/claude-switch
+
+            # Install shell aliases
+            claude-switch --install
+
+            # Start using
+            claude-switch --help
+            ```
+
+            ### 📋 Changelog
+
+            See [CHANGELOG.md](https://github.com/claude-provider/switch/blob/main/CHANGELOG.md) for detailed changes.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
