@@ -193,7 +193,7 @@ func (app *Application) switchToAnthropic() error {
 			return fmt.Errorf("failed to save config: %w", err)
 		}
 
-		app.yellow.Println("✅ Created empty configuration (re-login required)")
+		app.yellow.Println("⚠️  Created empty configuration (re-login required)")
 		return nil
 	}
 
