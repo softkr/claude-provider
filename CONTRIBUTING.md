@@ -44,7 +44,7 @@ git clone https://github.com/YOUR_USERNAME/switch.git
 cd switch
 
 # Add upstream remote
-git remote add upstream https://github.com/claude-provider/switch.git
+git remote add upstream https://github.com/softkr/claude-provider.git
 
 # Install dependencies
 make deps

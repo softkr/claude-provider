@@ -26,7 +26,7 @@ This document answers common questions about Claude Code API Switcher.
 
 **A:** The easiest way is using the installation script:
 ```bash
-curl -sSL https://raw.githubusercontent.com/claude-provider/switch/main/install-go.sh | bash
+curl -sSL https://raw.githubusercontent.com/softkr/claude-provider/main/install-go.sh | bash
 ```
 
 You can also download pre-built binaries or build from source. See the [Installation Guide](../README.md#quick-start) for detailed instructions.
@@ -282,7 +282,7 @@ The Go version is recommended for all users.
 
 **A:** Yes! See the [Development Guide](CONTRIBUTING.md) for build instructions:
 ```bash
-git clone https://github.com/claude-provider/switch.git
+git clone https://github.com/softkr/claude-provider.git
 cd switch
 make build
 ```
@@ -290,8 +290,8 @@ make build
 ### Q: How do I report bugs or request features?
 
 **A:**
-- **Bugs**: [Create an issue on GitHub](https://github.com/claude-provider/switch/issues)
-- **Features**: [Create a feature request](https://github.com/claude-provider/switch/issues/new?template=feature_request.md)
+- **Bugs**: [Create an issue on GitHub](https://github.com/softkr/claude-provider/issues)
+- **Features**: [Create a feature request](https://github.com/softkr/claude-provider/issues/new?template=feature_request.md)
 - **Security**: Email security@claude-provider.com (private)
 
 ### Q: Is there a command-line interface (CLI) help?
@@ -356,8 +356,8 @@ You can use both together - the tool for base configuration, environment variabl
 If you have questions not covered here:
 
 - **Documentation**: Check the [full documentation](../docs/)
-- **GitHub Issues**: [Browse existing issues](https://github.com/claude-provider/switch/issues)
-- **GitHub Discussions**: [Join the community discussion](https://github.com/claude-provider/switch/discussions)
+- **GitHub Issues**: [Browse existing issues](https://github.com/softkr/claude-provider/issues)
+- **GitHub Discussions**: [Join the community discussion](https://github.com/softkr/claude-provider/discussions)
 - **Email**: support@claude-provider.com
 
 ---

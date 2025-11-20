@@ -14,7 +14,7 @@ This guide covers how to build, package, and distribute Claude Code API Switcher
 
 ```bash
 # Clone repository
-git clone https://github.com/claude-provider/switch.git
+git clone https://github.com/softkr/claude-provider.git
 cd switch
 
 # Install dependencies
@@ -175,11 +175,11 @@ sha256sum claude-switch-* > checksums.txt
 
 ```bash
 # Download latest release
-curl -L https://github.com/claude-provider/switch/releases/latest/download/claude-switch-linux-amd64 \
+curl -L https://github.com/softkr/claude-provider/releases/latest/download/claude-switch-linux-amd64 \
   -o claude-switch
 
 # Download specific version
-curl -L https://github.com/claude-provider/switch/releases/download/v1.0.0/claude-switch-linux-amd64 \
+curl -L https://github.com/softkr/claude-provider/releases/download/v1.0.0/claude-switch-linux-amd64 \
   -o claude-switch
 ```
 
@@ -189,10 +189,10 @@ The installation script automatically detects platform and downloads the appropr
 
 ```bash
 # One-line installation
-curl -sSL https://raw.githubusercontent.com/claude-provider/switch/main/install-go.sh | bash
+curl -sSL https://raw.githubusercontent.com/softkr/claude-provider/main/install-go.sh | bash
 
 # Installation with specific method
-curl -sSL https://raw.githubusercontent.com/claude-provider/switch/main/install-go.sh | bash -s --prebuilt
+curl -sSL https://raw.githubusercontent.com/softkr/claude-provider/main/install-go.sh | bash -s --prebuilt
 ```
 
 ### Package Managers (Future)
@@ -202,7 +202,7 @@ curl -sSL https://raw.githubusercontent.com/claude-provider/switch/main/install-
 ```bash
 # Formula file: Formula/claude-switch.rb
 class ClaudeSwitch < Formula
-  url "https://github.com/claude-provider/switch/archive/v1.0.0.tar.gz"
+  url "https://github.com/softkr/claude-provider/archive/v1.0.0.tar.gz"
   sha256 "..."
   license "MIT"
 
@@ -322,7 +322,7 @@ signtool sign /f certificate.pfx /p password \
 
 ```bash
 # Verify download integrity
-curl -L https://github.com/claude-provider/switch/releases/latest/download/checksums.txt \
+curl -L https://github.com/softkr/claude-provider/releases/latest/download/checksums.txt \
   -o checksums.txt
 
 sha256sum -c checksums.txt
