@@ -102,6 +102,34 @@ claude-status     # Same as claude-switch -s
 
 **Important**: When switching to Z.AI, your Anthropic web login token is automatically backed up. Use `claude-switch -a` to restore it later.
 
+### Z.AI API Key Setup
+
+**Option 1: Interactive prompt (Recommended)**
+```bash
+claude-switch -z
+# Enter your API key when prompted
+# Choose to save for future use
+```
+
+**Option 2: Environment variable**
+```bash
+export ZAI_AUTH_TOKEN="your-api-key-here"
+claude-switch -z
+```
+
+**Option 3: Token file**
+```bash
+echo "your-api-key-here" > ~/.claude/.zai_token
+chmod 600 ~/.claude/.zai_token
+```
+
+### Token Management
+
+```bash
+claude-switch --clear-token  # Remove saved token
+claude-switch -s             # Check token status (masked)
+```
+
 ## Supported Providers
 
 ### Anthropic
