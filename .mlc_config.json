@@ -1,0 +1,26 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^https://github.com/softkr/claude-provider/releases"
+    },
+    {
+      "pattern": "^https://github.com/softkr/claude-provider/discussions"
+    },
+    {
+      "pattern": "^https://github.com/softkr/claude-provider/docs"
+    },
+    {
+      "pattern": "^https://console.anthropic.com"
+    },
+    {
+      "pattern": "^https://owasp.org"
+    }
+  ],
+  "replacementPatterns": [
+    {
+      "pattern": "^CONTRIBUTING.md$",
+      "replacement": "../CONTRIBUTING.md"
+    }
+  ],
+  "aliveStatusCodes": [200, 206]
+}
