@@ -144,12 +144,8 @@ jobs:
           go build -ldflags "-s -w -X main.version=$version" -o build/claude-switch-${{ matrix.goos }}-${{ matrix.goarch }} .
 
       - name: Test binary
-        run: |
-          if [[ "${{ matrix.goos }}" == "windows" ]]; then
-            ./build/claude-switch-${{ matrix.goos }}-${{ matrix.goarch }}.exe --help
-          else
-            ./build/claude-switch-${{ matrix.goos }}-${{ matrix.goarch }} --help
-          fi
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        run: ./build/claude-switch-${{ matrix.goos }}-${{ matrix.goarch }} --help
 
   docker:
     name: Docker Build
