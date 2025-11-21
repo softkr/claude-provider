@@ -73,12 +73,50 @@ clean:
 	rm -rf $(BUILD_DIR)
 	go clean
 
-# Install locally
+# Install locally (build + copy + aliases)
 .PHONY: install
 install: build
-	@echo "📦 Installing $(BINARY_NAME) locally..."
-	cp $(BUILD_DIR)/$(BINARY_NAME) /usr/local/bin/
-	@echo "✅ Installed to /usr/local/bin/$(BINARY_NAME)"
+	@echo "📦 Installing $(BINARY_NAME) to /usr/local/bin..."
+	@sudo cp $(BUILD_DIR)/$(BINARY_NAME) /usr/local/bin/
+	@sudo chmod +x /usr/local/bin/$(BINARY_NAME)
+	@echo "✅ Binary installed to /usr/local/bin/$(BINARY_NAME)"
+	@echo ""
+	@echo "🔧 Setting up shell aliases..."
+	@if [ -f ~/.zshrc ]; then \
+		if ! grep -q "Claude Code API Switcher" ~/.zshrc; then \
+			echo "" >> ~/.zshrc; \
+			echo "# Claude Code API Switcher" >> ~/.zshrc; \
+			echo "alias claude-switch='/usr/local/bin/$(BINARY_NAME)'" >> ~/.zshrc; \
+			echo "alias claude-anthropic='/usr/local/bin/$(BINARY_NAME) --anthropic'" >> ~/.zshrc; \
+			echo "alias claude-zai='/usr/local/bin/$(BINARY_NAME) --zai'" >> ~/.zshrc; \
+			echo "alias claude-status='/usr/local/bin/$(BINARY_NAME) --status'" >> ~/.zshrc; \
+			echo "✅ Aliases added to ~/.zshrc"; \
+		else \
+			echo "⚠️  Aliases already exist in ~/.zshrc"; \
+		fi \
+	fi
+	@if [ -f ~/.bashrc ]; then \
+		if ! grep -q "Claude Code API Switcher" ~/.bashrc; then \
+			echo "" >> ~/.bashrc; \
+			echo "# Claude Code API Switcher" >> ~/.bashrc; \
+			echo "alias claude-switch='/usr/local/bin/$(BINARY_NAME)'" >> ~/.bashrc; \
+			echo "alias claude-anthropic='/usr/local/bin/$(BINARY_NAME) --anthropic'" >> ~/.bashrc; \
+			echo "alias claude-zai='/usr/local/bin/$(BINARY_NAME) --zai'" >> ~/.bashrc; \
+			echo "alias claude-status='/usr/local/bin/$(BINARY_NAME) --status'" >> ~/.bashrc; \
+			echo "✅ Aliases added to ~/.bashrc"; \
+		else \
+			echo "⚠️  Aliases already exist in ~/.bashrc"; \
+		fi \
+	fi
+	@echo ""
+	@echo "🎉 Installation complete!"
+	@echo ""
+	@echo "Reload your shell: source ~/.zshrc (or ~/.bashrc)"
+	@echo ""
+	@echo "Commands:"
+	@echo "  claude-zai        - Switch to Z.AI"
+	@echo "  claude-anthropic  - Switch to Anthropic"
+	@echo "  claude-status     - Check current config"
 
 # Uninstall
 .PHONY: uninstall

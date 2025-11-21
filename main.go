@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -433,6 +434,52 @@ func (app *Application) install() error {
 	execPath, err = filepath.EvalSymlinks(execPath)
 	if err != nil {
 		return fmt.Errorf("failed to resolve executable path: %w", err)
+	}
+
+	// Install binary to /usr/local/bin
+	installPath := "/usr/local/bin/claude-switch"
+	if execPath != installPath {
+		app.cyan.Println("📦 Installing binary to /usr/local/bin...")
+
+		// Read source binary
+		sourceData, err := os.ReadFile(execPath)
+		if err != nil {
+			return fmt.Errorf("failed to read source binary: %w", err)
+		}
+
+		// Write to destination (requires sudo, so we'll use a temp approach)
+		tempFile := "/tmp/claude-switch-install"
+		err = os.WriteFile(tempFile, sourceData, 0755)
+		if err != nil {
+			return fmt.Errorf("failed to write temp file: %w", err)
+		}
+
+		// Try direct copy first, then sudo if needed
+		err = os.Rename(tempFile, installPath)
+		if err != nil {
+			// Need sudo - execute cp and chmod
+			app.yellow.Println("⚠️  Need sudo permission to install to /usr/local/bin")
+
+			cmd := fmt.Sprintf("sudo cp %s %s && sudo chmod +x %s", tempFile, installPath, installPath)
+			fmt.Printf("Running: %s\n", cmd)
+
+			// Use os/exec to run sudo command
+			import_cmd := exec.Command("bash", "-c", cmd)
+			import_cmd.Stdin = os.Stdin
+			import_cmd.Stdout = os.Stdout
+			import_cmd.Stderr = os.Stderr
+
+			if err := import_cmd.Run(); err != nil {
+				os.Remove(tempFile)
+				return fmt.Errorf("failed to install binary (try running with sudo): %w", err)
+			}
+			os.Remove(tempFile)
+		}
+
+		app.green.Println("✅ Binary installed to /usr/local/bin/claude-switch")
+		execPath = installPath
+	} else {
+		app.cyan.Println("📦 Binary already installed at /usr/local/bin/claude-switch")
 	}
 
 	// Determine shell configuration files

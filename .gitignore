@@ -27,3 +27,6 @@ Thumbs.db
 
 # Token files (security)
 .zai_token
+
+# claude
+.claude
