@@ -26,11 +26,17 @@ Perfect for developers who want to use alternative models like Z.AI's GLM series
 
 ## Quick Start
 
-### Option 1: Install with automatic script (Recommended)
+### Option 1: One-liner Install (Recommended)
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/softkr/claude-provider/main/install-go.sh | bash
+curl -fsSL https://raw.githubusercontent.com/softkr/claude-provider/main/install.sh | bash
 ```
+
+This will automatically:
+- Detect your OS and architecture
+- Download the latest binary
+- Install to `/usr/local/bin`
+- Set up shell aliases
 
 ### Option 2: Manual installation
 
