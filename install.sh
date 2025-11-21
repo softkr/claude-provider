@@ -54,11 +54,11 @@ echo ""
 
 # Get latest release version
 echo -e "${CYAN}🔍 Fetching latest release...${NC}"
-LATEST_VERSION=$(curl -s "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+LATEST_VERSION=$(curl -s "https://api.github.com/repos/${REPO}/releases" | grep '"tag_name":' | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
 
 if [ -z "$LATEST_VERSION" ]; then
-    echo -e "${YELLOW}⚠️  Could not fetch latest version, using 'latest'${NC}"
-    LATEST_VERSION="latest"
+    echo -e "${YELLOW}⚠️  Could not fetch latest version, using 'v2.1.0'${NC}"
+    LATEST_VERSION="v2.1.0"
 fi
 
 echo "   Version: $LATEST_VERSION"
