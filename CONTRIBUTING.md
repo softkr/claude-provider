@@ -222,8 +222,8 @@ func TestConfigLoad(t *testing.T) {
 ├── providers/
 │   ├── anthropic.go     # Anthropic provider
 │   ├── anthropic_test.go
-│   ├── zai.go          # Z.AI provider
-│   └── zai_test.go
+│   ├── z_ai.go         # Z.AI provider
+│   └── z_ai_test.go
 └── testdata/           # Test data files
     ├── valid_config.json
     └── invalid_config.json
@@ -349,8 +349,8 @@ switch/
 │   ├── providers/           # API providers
 │   │   ├── anthropic.go
 │   │   ├── anthropic_test.go
-│   │   ├── zai.go
-│   │   └── zai_test.go
+│   │   ├── z_ai.go
+│   │   └── z_ai_test.go
 │   ├── ui/                  # User interface
 │   │   ├── color.go
 │   │   └── color_test.go

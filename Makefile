@@ -88,7 +88,7 @@ install: build
 			echo "# Claude Code API Switcher" >> ~/.zshrc; \
 			echo "alias claude-switch='/usr/local/bin/$(BINARY_NAME)'" >> ~/.zshrc; \
 			echo "alias claude-anthropic='/usr/local/bin/$(BINARY_NAME) --anthropic'" >> ~/.zshrc; \
-			echo "alias claude-zai='/usr/local/bin/$(BINARY_NAME) --zai'" >> ~/.zshrc; \
+			echo "alias claude-z_ai='/usr/local/bin/$(BINARY_NAME) --z_ai'" >> ~/.zshrc; \
 			echo "alias claude-status='/usr/local/bin/$(BINARY_NAME) --status'" >> ~/.zshrc; \
 			echo "✅ Aliases added to ~/.zshrc"; \
 		else \
@@ -101,7 +101,7 @@ install: build
 			echo "# Claude Code API Switcher" >> ~/.bashrc; \
 			echo "alias claude-switch='/usr/local/bin/$(BINARY_NAME)'" >> ~/.bashrc; \
 			echo "alias claude-anthropic='/usr/local/bin/$(BINARY_NAME) --anthropic'" >> ~/.bashrc; \
-			echo "alias claude-zai='/usr/local/bin/$(BINARY_NAME) --zai'" >> ~/.bashrc; \
+			echo "alias claude-z_ai='/usr/local/bin/$(BINARY_NAME) --z_ai'" >> ~/.bashrc; \
 			echo "alias claude-status='/usr/local/bin/$(BINARY_NAME) --status'" >> ~/.bashrc; \
 			echo "✅ Aliases added to ~/.bashrc"; \
 		else \
@@ -114,7 +114,7 @@ install: build
 	@echo "Reload your shell: source ~/.zshrc (or ~/.bashrc)"
 	@echo ""
 	@echo "Commands:"
-	@echo "  claude-zai        - Switch to Z.AI"
+	@echo "  claude-z_ai       - Switch to Z.AI"
 	@echo "  claude-anthropic  - Switch to Anthropic"
 	@echo "  claude-status     - Check current config"
 

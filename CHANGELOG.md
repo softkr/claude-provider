@@ -11,12 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Short flags**: `-a`, `-z`, `-s` for quick access
 - **Secure token management**: API tokens are never hardcoded
 - **Token prompt system**: Interactive token input with save option
-- **Environment variable support**: `ZAI_AUTH_TOKEN` for Z.AI API key
-- **Token file storage**: `~/.claude/.zai_token` for saved tokens
+- **Environment variable support**: `Z_AI_AUTH_TOKEN` for Z.AI API key
+- **Token file storage**: `~/.claude/.z_ai_token` for saved tokens
 - **Token masking**: Displays tokens as `xxxx...xxxx` in status
 - **Clear token command**: `--clear-token` to remove saved tokens
 - **Fish shell support**: Works with bash, zsh, and fish
-- **Quick aliases**: `claude-anthropic`, `claude-zai`, `claude-status`
+- **Quick aliases**: `claude-anthropic`, `claude-z_ai`, `claude-status`
 - **Enhanced status display**: Box UI with detailed configuration info
 
 ### Changed
@@ -82,12 +82,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### New Features
 ```bash
 # Short flags (new)
-claude-switch -z   # instead of --zai
+claude-switch -z   # instead of --z_ai
 claude-switch -a   # instead of --anthropic
 claude-switch -s   # instead of --status
 
 # Quick aliases (new)
-claude-zai
+claude-z_ai
 claude-anthropic
 claude-status
 ```
@@ -98,7 +98,7 @@ claude-status
 
 #### Authentication Changes
 - **Anthropic**: Web login token (automatically backed up)
-- **Z.AI**: API key (prompted or use `ZAI_AUTH_TOKEN` env var)
+- **Z.AI**: API key (prompted or use `Z_AI_AUTH_TOKEN` env var)
 
 ---
 

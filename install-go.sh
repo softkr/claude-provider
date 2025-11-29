@@ -145,7 +145,7 @@ setup_aliases() {
     ALIAS_BLOCK="# Claude Code API Switcher v2.0.0
 alias claude-switch='$INSTALL_DIR/$BINARY_NAME'
 alias claude-anthropic='$INSTALL_DIR/$BINARY_NAME -a'
-alias claude-zai='$INSTALL_DIR/$BINARY_NAME -z'
+alias claude-z_ai='$INSTALL_DIR/$BINARY_NAME -z'
 alias claude-status='$INSTALL_DIR/$BINARY_NAME -s'"
 
     # Setup for multiple shell configs
@@ -169,7 +169,7 @@ alias claude-status='$INSTALL_DIR/$BINARY_NAME -s'"
         # Remove old aliases if exist
         if grep -q "Claude Code API Switcher" "$SHELL_RC" 2>/dev/null; then
             # Create temp file without old aliases
-            grep -v "Claude Code API Switcher\|claude-switch\|claude-anthropic\|claude-zai\|claude-status" "$SHELL_RC" > "$SHELL_RC.tmp"
+            grep -v "Claude Code API Switcher\|claude-switch\|claude-anthropic\|claude-z_ai\|claude-status" "$SHELL_RC" > "$SHELL_RC.tmp"
             mv "$SHELL_RC.tmp" "$SHELL_RC"
             echo -e "${YELLOW}🗑️  Removed old aliases from $SHELL_RC${NC}"
         fi
@@ -230,7 +230,7 @@ main() {
     echo "   claude-switch -s  # Check current config"
     echo ""
     echo "   Quick aliases:"
-    echo "   claude-zai        # Same as claude-switch -z"
+    echo "   claude-z_ai       # Same as claude-switch -z"
     echo "   claude-anthropic  # Same as claude-switch -a"
     echo "   claude-status     # Same as claude-switch -s"
     echo ""

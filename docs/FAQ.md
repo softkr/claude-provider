@@ -63,7 +63,7 @@ rm -rf ~/.claude/
 **A:** Use the following commands:
 ```bash
 claude-switch --anthropic  # Switch to Anthropic API
-claude-switch --zai        # Switch to Z.AI API
+claude-switch --z_ai       # Switch to Z.AI API
 claude-switch --status     # Check current configuration
 ```
 
@@ -324,7 +324,7 @@ export ANTHROPIC_BASE_URL="$CI_API_ENDPOINT"
 ```bash
 #!/bin/bash
 # Switch to Z.AI for testing
-claude-switch --zai
+claude-switch --z_ai
 # Run your tests
 ./run-tests.sh
 # Switch back to Anthropic

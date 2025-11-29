@@ -75,7 +75,7 @@ After installation, you can use the following commands:
 ```bash
 # Switch to Z.AI GLM models (backs up Anthropic web login token)
 claude-switch -z
-# or: claude-switch --zai
+# or: claude-switch --z_ai
 
 # Switch to Anthropic Claude (restores web login token from backup)
 claude-switch -a
@@ -94,7 +94,7 @@ claude-switch -h
 After installation, these convenient aliases are available:
 
 ```bash
-claude-zai        # Same as claude-switch -z
+claude-z_ai       # Same as claude-switch -z
 claude-anthropic  # Same as claude-switch -a
 claude-status     # Same as claude-switch -s
 ```
@@ -119,14 +119,14 @@ claude-switch -z
 
 **Option 2: Environment variable**
 ```bash
-export ZAI_AUTH_TOKEN="your-api-key-here"
+export Z_AI_AUTH_TOKEN="your-api-key-here"
 claude-switch -z
 ```
 
 **Option 3: Token file**
 ```bash
-echo "your-api-key-here" > ~/.claude/.zai_token
-chmod 600 ~/.claude/.zai_token
+echo "your-api-key-here" > ~/.claude/.z_ai_token
+chmod 600 ~/.claude/.z_ai_token
 ```
 
 ### Token Management
@@ -253,7 +253,7 @@ If you're migrating from the original Bash version:
 2. **Install the Go version** using the installation script
 3. **Run your first switch**:
    ```bash
-   claude-switch --anthropic  # or --zai
+   claude-switch --anthropic  # or --z_ai
    ```
 4. **Remove the old Bash version** (optional)
 

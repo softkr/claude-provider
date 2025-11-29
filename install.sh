@@ -146,7 +146,7 @@ setup_aliases() {
 # Claude Code API Switcher
 alias claude-switch '${INSTALL_PATH}'
 alias claude-anthropic '${INSTALL_PATH} --anthropic'
-alias claude-zai '${INSTALL_PATH} --zai'
+alias claude-z_ai '${INSTALL_PATH} --z_ai'
 alias claude-status '${INSTALL_PATH} --status'
 EOF
     else
@@ -155,7 +155,7 @@ EOF
 # Claude Code API Switcher
 alias claude-switch='${INSTALL_PATH}'
 alias claude-anthropic='${INSTALL_PATH} --anthropic'
-alias claude-zai='${INSTALL_PATH} --zai'
+alias claude-z_ai='${INSTALL_PATH} --z_ai'
 alias claude-status='${INSTALL_PATH} --status'
 EOF
     fi
@@ -202,10 +202,10 @@ echo -e "${GREEN}🎉 Installation complete!${NC}"
 echo ""
 echo -e "${CYAN}Available commands:${NC}"
 echo "  claude-switch --anthropic  # Switch to Anthropic API"
-echo "  claude-switch --zai        # Switch to Z.AI API"
+echo "  claude-switch --z_ai       # Switch to Z.AI API"
 echo "  claude-switch --status     # Check current config"
 echo "  claude-anthropic           # Quick switch to Anthropic"
-echo "  claude-zai                 # Quick switch to Z.AI"
+echo "  claude-z_ai                # Quick switch to Z.AI"
 echo "  claude-status              # Quick status check"
 echo ""
 

@@ -22,7 +22,7 @@ const (
 // Provider types
 const (
 	ProviderAnthropic = "anthropic"
-	ProviderZAI       = "zai"
+	ProviderZAI       = "z_ai"
 	ProviderCustom    = "custom"
 	ProviderUnknown   = "unknown"
 )
@@ -57,7 +57,7 @@ type Application struct {
 }
 
 // Z.AI specific environment keys (excluding ANTHROPIC_AUTH_TOKEN which is shared)
-var zaiEnvKeys = []string{
+var z_aiEnvKeys = []string{
 	"ANTHROPIC_BASE_URL",
 	"API_TIMEOUT_MS",
 	"ANTHROPIC_DEFAULT_OPUS_MODEL",
@@ -148,13 +148,13 @@ func (app *Application) saveConfigAtomic(filename string, config *Config) error 
 // promptForToken prompts user for API token
 func (app *Application) promptForToken() (string, error) {
 	// Check environment variable first
-	if token := os.Getenv("ZAI_AUTH_TOKEN"); token != "" {
-		app.cyan.Println("📌 Using token from ZAI_AUTH_TOKEN environment variable")
+	if token := os.Getenv("Z_AI_AUTH_TOKEN"); token != "" {
+		app.cyan.Println("📌 Using token from Z_AI_AUTH_TOKEN environment variable")
 		return token, nil
 	}
 
 	// Check if token file exists
-	tokenFile := filepath.Join(app.configDir, ".zai_token")
+	tokenFile := filepath.Join(app.configDir, ".z_ai_token")
 	if data, err := os.ReadFile(tokenFile); err == nil {
 		token := strings.TrimSpace(string(data))
 		if token != "" {
@@ -242,7 +242,7 @@ func (app *Application) switchToAnthropic() error {
 	restoredConfig := &Config{Env: backup.Env}
 
 	// Remove any Z.AI specific keys that might be in backup
-	for _, key := range zaiEnvKeys {
+	for _, key := range z_aiEnvKeys {
 		delete(restoredConfig.Env, key)
 	}
 
@@ -344,10 +344,10 @@ func (app *Application) switchToZAI() error {
 	return nil
 }
 
-// isZAIKey checks if a key is a Z.AI specific key
-func isZAIKey(key string) bool {
-	for _, zaiKey := range zaiEnvKeys {
-		if key == zaiKey {
+// isZ_AIKey checks if a key is a Z.AI specific key
+func isZ_AIKey(key string) bool {
+	for _, z_aiKey := range z_aiEnvKeys {
+		if key == z_aiKey {
 			return true
 		}
 	}
@@ -519,7 +519,7 @@ func (app *Application) showStatus() error {
 	// Show other environment variables
 	otherEnvCount := 0
 	for key := range config.Env {
-		if !isZAIKey(key) && key != "ANTHROPIC_BASE_URL" {
+		if !isZ_AIKey(key) && key != "ANTHROPIC_BASE_URL" {
 			otherEnvCount++
 		}
 	}
@@ -550,7 +550,7 @@ func (app *Application) showStatus() error {
 	}
 
 	// Check for saved token
-	tokenFile := filepath.Join(app.configDir, ".zai_token")
+	tokenFile := filepath.Join(app.configDir, ".z_ai_token")
 	if _, err := os.Stat(tokenFile); err == nil {
 		app.cyan.Println("  🔑 Saved Token: Available")
 	}
@@ -570,7 +570,7 @@ func maskToken(token string) string {
 type TokenType string
 
 const (
-	TokenTypeZAI       TokenType = "zai_api_key"
+	TokenTypeZAI       TokenType = "z_ai_api_key"
 	TokenTypeAnthropic TokenType = "anthropic_web"
 	TokenTypeUnknown   TokenType = "unknown"
 )
@@ -582,8 +582,8 @@ func detectTokenType(token string) TokenType {
 	}
 
 	// Z.AI API keys typically start with specific prefixes or have certain patterns
-	// Common patterns: "sk-", "zai-", or base64-like strings of certain length
-	if strings.HasPrefix(token, "sk-") || strings.HasPrefix(token, "zai-") {
+	// Common patterns: "sk-", "z_ai-", or base64-like strings of certain length
+	if strings.HasPrefix(token, "sk-") || strings.HasPrefix(token, "z_ai-") {
 		return TokenTypeZAI
 	}
 
@@ -615,7 +615,7 @@ func (app *Application) validateTokenForProvider(token string, provider string) 
 		// Z.AI should use API keys
 		if tokenType == TokenTypeAnthropic {
 			app.yellow.Println("⚠️  Warning: Token looks like an Anthropic web login token")
-			app.yellow.Println("   Z.AI typically uses API keys (sk-xxx or zai-xxx format)")
+			app.yellow.Println("   Z.AI typically uses API keys (sk-xxx or z_ai-xxx format)")
 			return true // Still allow, just warn
 		}
 	case ProviderAnthropic:
@@ -632,7 +632,7 @@ func (app *Application) validateTokenForProvider(token string, provider string) 
 
 // clearToken removes the saved token
 func (app *Application) clearToken() error {
-	tokenFile := filepath.Join(app.configDir, ".zai_token")
+	tokenFile := filepath.Join(app.configDir, ".z_ai_token")
 
 	if _, err := os.Stat(tokenFile); os.IsNotExist(err) {
 		app.yellow.Println("⚠️  No saved token found")
@@ -721,7 +721,7 @@ func (app *Application) install() error {
 # Claude Code API Switcher
 alias claude-switch='%s'
 alias claude-anthropic='%s --anthropic'
-alias claude-zai='%s --zai'
+alias claude-z_ai='%s --z_ai'
 alias claude-status='%s --status'
 `, execPath, execPath, execPath, execPath)
 
@@ -730,7 +730,7 @@ alias claude-status='%s --status'
 # Claude Code API Switcher
 alias claude-switch '%s'
 alias claude-anthropic '%s --anthropic'
-alias claude-zai '%s --zai'
+alias claude-z_ai '%s --z_ai'
 alias claude-status '%s --status'
 `, execPath, execPath, execPath, execPath)
 
@@ -782,10 +782,10 @@ alias claude-status '%s --status'
 	fmt.Println()
 	app.cyan.Println("Available commands after reload:")
 	fmt.Println("  claude-switch --anthropic  # Use Anthropic Claude")
-	fmt.Println("  claude-switch --zai        # Use Z.AI GLM")
+	fmt.Println("  claude-switch --z_ai       # Use Z.AI GLM")
 	fmt.Println("  claude-switch --status     # Check current config")
 	fmt.Println("  claude-anthropic           # Quick switch to Anthropic")
-	fmt.Println("  claude-zai                 # Quick switch to Z.AI")
+	fmt.Println("  claude-z_ai                # Quick switch to Z.AI")
 	fmt.Println("  claude-status              # Quick status check")
 	fmt.Println()
 	app.cyan.Println("Reload your shell:")
@@ -847,22 +847,22 @@ func (app *Application) printUsage() {
 	fmt.Println()
 	app.cyan.Println("Commands:")
 	fmt.Println("  -a, --anthropic  Switch to Anthropic API (restore web login token)")
-	fmt.Println("  -z, --zai        Switch to Z.AI API (use API key)")
+	fmt.Println("  -z, --z_ai       Switch to Z.AI API (use API key)")
 	fmt.Println("  -s, --status     Show current configuration")
-	fmt.Println("  --clear-token    Remove saved Z.AI API token")
+	fmt.Println("  --clear-token    Remove saved Z_AI API token")
 	fmt.Println("  --install        Install aliases to shell")
 	fmt.Println("  -v, --version    Show version")
 	fmt.Println("  -h, --help       Show this help message")
 	fmt.Println()
 	app.cyan.Println("Authentication:")
 	fmt.Println("  Anthropic  Uses web login token (automatically backed up)")
-	fmt.Println("  Z.AI       Uses API key (prompted or from ZAI_AUTH_TOKEN env)")
+	fmt.Println("  Z.AI       Uses API key (prompted or from Z_AI_AUTH_TOKEN env)")
 	fmt.Println()
 	app.cyan.Println("Environment Variables:")
-	fmt.Println("  ZAI_AUTH_TOKEN   Z.AI API key (optional)")
+	fmt.Println("  Z_AI_AUTH_TOKEN  Z.AI API key (optional)")
 	fmt.Println()
 	app.cyan.Println("Examples:")
-	fmt.Println("  claude-switch --zai        # Backup web token, switch to Z.AI")
+	fmt.Println("  claude-switch --z_ai       # Backup web token, switch to Z.AI")
 	fmt.Println("  claude-switch --anthropic  # Restore web token from backup")
 	fmt.Println("  claude-switch --status     # Check current provider")
 	fmt.Println()
@@ -875,7 +875,7 @@ func main() {
 	var (
 		anthropic  = flag.Bool("anthropic", false, "Switch to Anthropic API")
 		a          = flag.Bool("a", false, "Switch to Anthropic API (short)")
-		zai        = flag.Bool("zai", false, "Switch to Z.AI API")
+		z_ai       = flag.Bool("z_ai", false, "Switch to Z.AI API")
 		z          = flag.Bool("z", false, "Switch to Z.AI API (short)")
 		status     = flag.Bool("status", false, "Show current configuration")
 		s          = flag.Bool("s", false, "Show current configuration (short)")
@@ -910,7 +910,7 @@ func main() {
 			app.red.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
-	case *zai || *z:
+	case *z_ai || *z:
 		if err := app.switchToZAI(); err != nil {
 			app.red.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
