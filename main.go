@@ -10,17 +10,39 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 )
 
 const (
-	Version = "2.0.0"
+	Version = "2.1.0"
+)
+
+// Provider types
+const (
+	ProviderAnthropic = "anthropic"
+	ProviderZAI       = "zai"
+	ProviderCustom    = "custom"
+	ProviderUnknown   = "unknown"
 )
 
 // Config represents the Claude configuration structure
 type Config struct {
 	Env map[string]string `json:"env"`
+}
+
+// BackupMetadata stores information about the backup
+type BackupMetadata struct {
+	Provider  string `json:"provider"`
+	CreatedAt string `json:"created_at"`
+	Version   string `json:"version"`
+}
+
+// BackupConfig represents the backup file structure with metadata
+type BackupConfig struct {
+	Metadata BackupMetadata    `json:"_metadata"`
+	Env      map[string]string `json:"env"`
 }
 
 // Application holds the application state
@@ -180,9 +202,22 @@ func (app *Application) promptForToken() (string, error) {
 func (app *Application) switchToAnthropic() error {
 	app.green.Println("🔄 Switching to Anthropic API...")
 
-	// Check if backup exists (required for web login token)
-	if _, err := os.Stat(app.backupFile); os.IsNotExist(err) {
-		app.red.Println("❌ No backup found!")
+	// Load current config to check if already using Anthropic
+	currentConfig, err := app.loadConfig(app.settingsFile)
+	if err == nil && app.isAnthropicConfig(currentConfig) {
+		app.yellow.Println("⚠️  Already using Anthropic configuration")
+		app.cyan.Println("   Use --status to check current settings")
+		return nil
+	}
+
+	// Check if valid Anthropic backup exists
+	hasBackup, backup, err := app.hasValidAnthropicBackup()
+	if err != nil {
+		app.yellow.Printf("⚠️  Failed to read backup: %v\n", err)
+	}
+
+	if !hasBackup || backup == nil {
+		app.red.Println("❌ No valid Anthropic backup found!")
 		app.yellow.Println("⚠️  Cannot restore Anthropic web login token without backup.")
 		app.yellow.Println("   You may need to re-login to Claude Code.")
 		fmt.Println()
@@ -198,18 +233,20 @@ func (app *Application) switchToAnthropic() error {
 		return nil
 	}
 
-	// Restore from backup (contains web login token)
-	backupConfig, err := app.loadConfig(app.backupFile)
-	if err != nil {
-		return fmt.Errorf("failed to load backup: %w", err)
+	// Show backup info
+	if backup.Metadata.CreatedAt != "" {
+		app.cyan.Printf("💾 Restoring from backup created at: %s\n", backup.Metadata.CreatedAt)
 	}
+
+	// Create config from backup
+	restoredConfig := &Config{Env: backup.Env}
 
 	// Remove any Z.AI specific keys that might be in backup
 	for _, key := range zaiEnvKeys {
-		delete(backupConfig.Env, key)
+		delete(restoredConfig.Env, key)
 	}
 
-	err = app.saveConfigAtomic(app.settingsFile, backupConfig)
+	err = app.saveConfigAtomic(app.settingsFile, restoredConfig)
 	if err != nil {
 		return fmt.Errorf("failed to restore config: %w", err)
 	}
@@ -230,22 +267,49 @@ func (app *Application) switchToZAI() error {
 	}
 
 	// Check if already using Z.AI
-	if strings.Contains(config.Env["ANTHROPIC_BASE_URL"], "z.ai") {
+	if app.isZAIConfig(config) {
 		app.yellow.Println("⚠️  Already using Z.AI configuration")
 		app.cyan.Println("   Use --status to check current settings")
 		return nil
 	}
 
-	// Backup current Anthropic configuration (CRITICAL: contains web login token)
-	if _, err := os.Stat(app.settingsFile); err == nil && len(config.Env) > 0 {
-		err = app.createBackupAtomic()
+	// Check current provider
+	currentProvider := app.detectProvider(config)
+
+	// Only backup if current config is Anthropic (has web login token)
+	if currentProvider == ProviderAnthropic && len(config.Env) > 0 {
+		// Check if valid Anthropic backup already exists
+		hasBackup, existingBackup, err := app.hasValidAnthropicBackup()
 		if err != nil {
-			return fmt.Errorf("failed to backup Anthropic config (web login token): %w", err)
+			app.yellow.Printf("⚠️  Failed to check existing backup: %v\n", err)
 		}
-		app.green.Println("✅ Anthropic configuration backed up (web login token saved)")
-	} else {
-		app.yellow.Println("⚠️  No existing Anthropic configuration to backup")
-		app.yellow.Println("   You may need to re-login when switching back")
+
+		if hasBackup && existingBackup != nil {
+			// Backup already exists - don't overwrite
+			app.cyan.Println("💾 Existing Anthropic backup found (preserving web login token)")
+			if existingBackup.Metadata.CreatedAt != "" {
+				app.cyan.Printf("   Backed up at: %s\n", existingBackup.Metadata.CreatedAt)
+			}
+		} else {
+			// Create new backup with metadata
+			err = app.createBackupWithMetadata(config, ProviderAnthropic)
+			if err != nil {
+				return fmt.Errorf("failed to backup Anthropic config (web login token): %w", err)
+			}
+			app.green.Println("✅ Anthropic configuration backed up (web login token saved)")
+		}
+	} else if currentProvider == ProviderUnknown {
+		// Check if we have a valid backup from before
+		hasBackup, _, _ := app.hasValidAnthropicBackup()
+		if hasBackup {
+			app.cyan.Println("💾 Using existing Anthropic backup")
+		} else {
+			app.yellow.Println("⚠️  No Anthropic configuration to backup")
+			app.yellow.Println("   You may need to re-login when switching back")
+		}
+	} else if currentProvider == ProviderCustom {
+		app.yellow.Println("⚠️  Current config is custom provider - not backing up")
+		app.yellow.Println("   Anthropic backup will be preserved if it exists")
 	}
 
 	// Get Z.AI API token
@@ -253,6 +317,9 @@ func (app *Application) switchToZAI() error {
 	if err != nil {
 		return err
 	}
+
+	// Validate token format
+	app.validateTokenForProvider(token, ProviderZAI)
 
 	// Create new config for Z.AI (fresh start, don't mix with Anthropic settings)
 	newConfig := &Config{
@@ -287,23 +354,99 @@ func isZAIKey(key string) bool {
 	return false
 }
 
-// createBackupAtomic creates a backup of the current configuration atomically
-func (app *Application) createBackupAtomic() error {
-	source, err := os.ReadFile(app.settingsFile)
+// detectProvider detects the current provider from configuration
+func (app *Application) detectProvider(config *Config) string {
+	if config == nil || len(config.Env) == 0 {
+		return ProviderUnknown
+	}
+
+	baseURL := config.Env["ANTHROPIC_BASE_URL"]
+
+	// Z.AI detection
+	if strings.Contains(baseURL, "z.ai") {
+		return ProviderZAI
+	}
+
+	// If no custom base URL, it's Anthropic (default)
+	if baseURL == "" {
+		return ProviderAnthropic
+	}
+
+	// Custom provider
+	return ProviderCustom
+}
+
+// isAnthropicConfig checks if the current configuration is for Anthropic
+func (app *Application) isAnthropicConfig(config *Config) bool {
+	return app.detectProvider(config) == ProviderAnthropic
+}
+
+// isZAIConfig checks if the current configuration is for Z.AI
+func (app *Application) isZAIConfig(config *Config) bool {
+	return app.detectProvider(config) == ProviderZAI
+}
+
+// hasValidAnthropicBackup checks if a valid Anthropic backup exists
+func (app *Application) hasValidAnthropicBackup() (bool, *BackupConfig, error) {
+	if _, err := os.Stat(app.backupFile); os.IsNotExist(err) {
+		return false, nil, nil
+	}
+
+	data, err := os.ReadFile(app.backupFile)
 	if err != nil {
-		return err
+		return false, nil, err
+	}
+
+	var backup BackupConfig
+	err = json.Unmarshal(data, &backup)
+	if err != nil {
+		// Try loading as old format (without metadata)
+		var oldConfig Config
+		if json.Unmarshal(data, &oldConfig) == nil {
+			// Old format backup - assume it's Anthropic
+			backup = BackupConfig{
+				Metadata: BackupMetadata{Provider: ProviderAnthropic},
+				Env:      oldConfig.Env,
+			}
+			return true, &backup, nil
+		}
+		return false, nil, err
+	}
+
+	// Check if backup is for Anthropic
+	if backup.Metadata.Provider != ProviderAnthropic {
+		return false, &backup, nil
+	}
+
+	return true, &backup, nil
+}
+
+// createBackupWithMetadata creates a backup with metadata
+func (app *Application) createBackupWithMetadata(config *Config, provider string) error {
+	backup := BackupConfig{
+		Metadata: BackupMetadata{
+			Provider:  provider,
+			CreatedAt: time.Now().Format(time.RFC3339),
+			Version:   Version,
+		},
+		Env: config.Env,
+	}
+
+	data, err := json.MarshalIndent(backup, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal backup: %w", err)
 	}
 
 	tempFile := app.backupFile + ".tmp"
-	err = os.WriteFile(tempFile, source, 0600)
+	err = os.WriteFile(tempFile, data, 0600)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to write temp backup: %w", err)
 	}
 
 	err = os.Rename(tempFile, app.backupFile)
 	if err != nil {
 		os.Remove(tempFile)
-		return err
+		return fmt.Errorf("failed to save backup: %w", err)
 	}
 
 	return nil
@@ -345,10 +488,17 @@ func (app *Application) showStatus() error {
 			app.cyan.Printf("  Timeout: %s ms\n", timeout)
 		}
 
-		// Show masked token
+		// Show masked token with type detection
 		if token := config.Env["ANTHROPIC_AUTH_TOKEN"]; token != "" {
 			maskedToken := maskToken(token)
-			app.cyan.Printf("  Auth Token: %s\n", maskedToken)
+			tokenType := detectTokenType(token)
+			tokenTypeStr := ""
+			if tokenType == TokenTypeZAI {
+				tokenTypeStr = " (API key)"
+			} else if tokenType == TokenTypeAnthropic {
+				tokenTypeStr = " (web token - unexpected for Z.AI)"
+			}
+			app.cyan.Printf("  Auth Token: %s%s\n", maskedToken, tokenTypeStr)
 		}
 	} else if baseURL == "" {
 		app.green.Println("┌─────────────────────────────────────┐")
@@ -377,9 +527,24 @@ func (app *Application) showStatus() error {
 		app.cyan.Printf("  Other env vars: %d\n", otherEnvCount)
 	}
 
-	// Check for backup
-	if _, err := os.Stat(app.backupFile); err == nil {
-		app.cyan.Println("  💾 Backup: Available")
+	// Check for backup with metadata
+	hasBackup, backup, _ := app.hasValidAnthropicBackup()
+	if hasBackup && backup != nil {
+		app.cyan.Println("  💾 Backup: Available (Anthropic)")
+		if backup.Metadata.CreatedAt != "" {
+			app.cyan.Printf("     Created: %s\n", backup.Metadata.CreatedAt)
+		}
+		// Show token type in backup
+		if token := backup.Env["ANTHROPIC_AUTH_TOKEN"]; token != "" {
+			tokenType := detectTokenType(token)
+			if tokenType == TokenTypeAnthropic {
+				app.cyan.Println("     Token: Web login token")
+			} else if tokenType == TokenTypeZAI {
+				app.yellow.Println("     Token: API key (unexpected)")
+			}
+		}
+	} else if _, err := os.Stat(app.backupFile); err == nil {
+		app.yellow.Println("  💾 Backup: Available (unknown format)")
 	} else {
 		app.yellow.Println("  💾 Backup: Not found")
 	}
@@ -399,6 +564,70 @@ func maskToken(token string) string {
 		return "********"
 	}
 	return token[:4] + "..." + token[len(token)-4:]
+}
+
+// TokenType represents the type of authentication token
+type TokenType string
+
+const (
+	TokenTypeZAI       TokenType = "zai_api_key"
+	TokenTypeAnthropic TokenType = "anthropic_web"
+	TokenTypeUnknown   TokenType = "unknown"
+)
+
+// detectTokenType attempts to identify the token type based on format
+func detectTokenType(token string) TokenType {
+	if token == "" {
+		return TokenTypeUnknown
+	}
+
+	// Z.AI API keys typically start with specific prefixes or have certain patterns
+	// Common patterns: "sk-", "zai-", or base64-like strings of certain length
+	if strings.HasPrefix(token, "sk-") || strings.HasPrefix(token, "zai-") {
+		return TokenTypeZAI
+	}
+
+	// Anthropic web login tokens are typically longer JWT-like tokens
+	// They often contain dots (.) as JWT separators
+	if strings.Count(token, ".") >= 2 && len(token) > 100 {
+		return TokenTypeAnthropic
+	}
+
+	// If token is very long and doesn't look like an API key, assume web token
+	if len(token) > 200 {
+		return TokenTypeAnthropic
+	}
+
+	// Short tokens without special prefixes might be API keys
+	if len(token) < 100 {
+		return TokenTypeZAI
+	}
+
+	return TokenTypeUnknown
+}
+
+// validateTokenForProvider checks if a token appears valid for the given provider
+func (app *Application) validateTokenForProvider(token string, provider string) bool {
+	tokenType := detectTokenType(token)
+
+	switch provider {
+	case ProviderZAI:
+		// Z.AI should use API keys
+		if tokenType == TokenTypeAnthropic {
+			app.yellow.Println("⚠️  Warning: Token looks like an Anthropic web login token")
+			app.yellow.Println("   Z.AI typically uses API keys (sk-xxx or zai-xxx format)")
+			return true // Still allow, just warn
+		}
+	case ProviderAnthropic:
+		// Anthropic should use web login tokens
+		if tokenType == TokenTypeZAI {
+			app.yellow.Println("⚠️  Warning: Token looks like an API key, not a web login token")
+			app.yellow.Println("   Anthropic web login uses longer JWT-style tokens")
+			return true // Still allow, just warn
+		}
+	}
+
+	return true
 }
 
 // clearToken removes the saved token
